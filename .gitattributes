@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+*.a binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.ogg binary
+*.p3 binary
+*.pdf binary
+*.png binary
+*.qoi binary
+*.qoif binary
+*.rois binary
+*.vpg binary
+*.xlsx binary

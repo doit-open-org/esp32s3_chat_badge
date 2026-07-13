@@ -1,0 +1,29 @@
+## ESP-IDF Component Manager manifest for the single supported board.
+## Versions match the dependency set used by the supplied internal build.
+dependencies:
+  idf:
+    version: ">=5.4.0,<5.6.0"
+
+  78/esp-wifi-connect:
+    version: "2.5.1"
+    override_path: "../components/78__esp-wifi-connect"
+  78/esp-opus-encoder:
+    version: "2.4.0"
+    override_path: "../components/78__esp-opus-encoder"
+  78/xiaozhi-fonts: "1.5.5"
+
+  espressif/esp_lcd_panel_io_additions: "1.0.1"
+  espressif/esp_lcd_touch: "1.2.1"
+  espressif/button: "4.1.6"
+  espressif/esp-sr: "2.1.5"
+
+  lvgl/lvgl: "9.3.0"
+  espressif/esp_lvgl_port:
+    version: "2.7.0"
+    override_path: "../components/espressif__esp_lvgl_port"
+  espressif/esp_lv_decoder:
+    version: "0.3.1"
+    override_path: "../components/espressif__esp_lv_decoder"
+
+  espressif/tinyusb: "0.19.0~2"
+  espressif/esp_tinyusb: "2.1.0"

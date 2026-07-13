@@ -1,0 +1,78 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible build or runtime problem.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: checkboxes
+    attributes:
+      label: Checklist / 提交前检查
+      options:
+        - label: I searched existing Issues and did not find the same problem.
+          required: true
+        - label: I removed credentials, tokens, keys, MAC lists, and customer data from logs.
+          required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or release
+      placeholder: Git SHA or v2.x.x
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Hardware revision
+      placeholder: MZ46-S3-DZ V1.0
+    validations:
+      required: true
+  - type: input
+    id: idf
+    attributes:
+      label: ESP-IDF version
+      placeholder: v5.4.4
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Build / dependencies
+        - Boot / reset
+        - Wi-Fi / provisioning
+        - Audio / VB6824
+        - Display / touch / UI
+        - microSD / USB MSC
+        - Battery / charging / power
+        - Protocol / MCP / OTA
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Flash...
+        2. Power on...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste complete relevant logs. Do not include secrets.
+      render: text

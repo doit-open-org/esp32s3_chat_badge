@@ -1,0 +1,10 @@
+dependencies:
+  espressif/mdns: ^1.8.2
+  idf: '>=5.4,<5.6'
+description: VB6824 voice/audio coprocessor integration
+files:
+  exclude:
+  - .git
+license: MIT
+version: 2.3.0
+repository: https://github.com/78/vb6824

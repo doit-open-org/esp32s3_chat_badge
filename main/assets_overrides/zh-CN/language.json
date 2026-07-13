@@ -1,0 +1,6 @@
+{
+    "strings": {
+        "WAKEUP_WORD_ABORT":"唤醒词打断",
+        "REALTIME_ABORT":"实时打断"
+    }
+}

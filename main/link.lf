@@ -1,0 +1,18 @@
+# 1) 定义输入段名（你代码里用 __attribute__((section(".cl_ui_page")))）
+[sections:cl_ui_page]
+entries:
+    .cl_ui_page
+
+# 2) 定义把 cl_ui_page 这些输入段放到哪个“目标”区（这里放只读 flash_rodata）
+[scheme:cl_ui_page_scheme]
+entries:
+    cl_ui_page -> flash_rodata
+
+# 3) 为具体归档库（组件）应用映射，并加上 KEEP/SURROUND
+#    把 libmain.a 换成你真正的组件库名（lib<component>.a）
+[mapping:cl_ui_page_map]
+archive: libmain.a
+entries:
+    * (cl_ui_page_scheme);                 # 先选中整个库使用该 scheme
+        cl_ui_page -> flash_rodata         # 然后对该 section 的这条映射追加 flags
+            KEEP() SURROUND(cl_ui_page)

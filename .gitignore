@@ -1,0 +1,34 @@
+# ESP-IDF generated files
+build/
+build-*/
+managed_components/
+sdkconfig
+sdkconfig.old
+dependencies.lock
+releases/
+
+# Generated source/assets
+main/assets/lang_config.h
+main/mmap_generate_emoji.h
+mmap_generate_*.h
+
+# IDE and local tooling
+.vscode/
+.idea/
+.devcontainer/
+.cache/
+.clangd/index/
+.env
+.DS_Store
+Thumbs.db
+
+# Python and logs
+__pycache__/
+*.py[cod]
+*.log
+
+# Firmware artifacts are published as GitHub Release assets, not committed
+*.bin
+*.elf
+*.map
+*.uf2

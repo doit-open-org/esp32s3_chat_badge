@@ -1,0 +1,364 @@
+menu "Xiaozhi Assistant"
+
+config OTA_URL
+    string "Default OTA URL"
+    default "https://api.tenclass.net/xiaozhi/ota/"
+    help
+        The application will access this URL to check for new firmwares and server address.
+
+config USE_CUSTOM_OTA
+    bool "Use Custom OTA"
+    default n
+    help
+        Enable Custom OTA
+
+config CUSTOM_OTA_VERSION_URL
+    depends on USE_CUSTOM_OTA
+    string "Custom OTA Version URL"
+    default "http://xiaozhi.doit.am/ota/ota.php"
+    help
+        The application will access this URL to check for updates.
+
+config CONNECTION_FORCE_FIXED_WEBSOCKET
+    bool "Force Fixed Websocket"
+    default n
+    help
+        Force Fixed Websocket
+
+config WEBSOCKET_URL
+    depends on CONNECTION_FORCE_FIXED_WEBSOCKET
+    string "Websocket URL"
+    default "wss://api.tenclass.net/xiaozhi/v1/"
+    help
+        Communication with the server through websocket after wake up.
+
+config WEBSOCKET_ACCESS_TOKEN
+    depends on CONNECTION_FORCE_FIXED_WEBSOCKET
+    string "Websocket Access Token"
+    default ""
+    help
+        Access token for websocket communication.
+choice
+    prompt "Flash Assets"
+    default FLASH_DEFAULT_ASSETS
+    help
+        Select the assets to flash.
+
+    config FLASH_NONE_ASSETS
+        bool "Do not flash assets"
+    config FLASH_DEFAULT_ASSETS
+        bool "Flash Default Assets"
+    config FLASH_CUSTOM_ASSETS
+        bool "Flash Custom Assets"
+endchoice
+
+config CUSTOM_ASSETS_FILE
+    depends on FLASH_CUSTOM_ASSETS
+    string "Custom Assets File"
+    default "assets.bin"
+    help
+        The custom assets file to flash.
+        It can be a local file relative to the project directory or a remote url.
+
+choice
+    prompt "Default Language"
+    default LANGUAGE_ZH_CN
+    help
+        Select device display language
+
+    config LANGUAGE_ZH_CN
+        bool "Chinese"
+    config LANGUAGE_ZH_TW
+        bool "Chinese Traditional"
+    config LANGUAGE_EN_US
+        bool "English"
+    config LANGUAGE_JA_JP
+        bool "Japanese"
+    config LANGUAGE_KO_KR
+        bool "Korean"
+    config LANGUAGE_VI_VN
+        bool "Vietnamese"
+    config LANGUAGE_TH_TH
+        bool "Thai"
+    config LANGUAGE_DE_DE
+        bool "German"
+    config LANGUAGE_FR_FR
+        bool "French"
+    config LANGUAGE_ES_ES
+        bool "Spanish"
+    config LANGUAGE_IT_IT
+        bool "Italian"
+    config LANGUAGE_RU_RU
+        bool "Russian"
+    config LANGUAGE_AR_SA
+        bool "Arabic"
+    config LANGUAGE_HI_IN
+        bool "Hindi"
+    config LANGUAGE_PT_PT
+        bool "Portuguese"
+    config LANGUAGE_PL_PL
+        bool "Polish"
+    config LANGUAGE_CS_CZ
+        bool "Czech"
+    config LANGUAGE_FI_FI
+        bool "Finnish"
+    config LANGUAGE_TR_TR
+        bool "Turkish"
+    config LANGUAGE_ID_ID
+        bool "Indonesian"
+    config LANGUAGE_UK_UA
+        bool "Ukrainian"
+    config LANGUAGE_RO_RO
+        bool "Romanian"
+endchoice
+
+config BOARD_PATH
+    string "Board Path"
+    default "esp32s3-chat-badge"
+    help
+        Board Path
+
+config ASSETS_PATH
+    string "Assets Path"
+    default "assets"
+    help
+        Assets Path
+
+config ASSETS_FIX_PATH
+    string "Assets Fix Path"
+    default ""
+    help
+        Assets Fix Path
+
+config USE_WECHAT_MESSAGE_STYLE
+    bool "Enable WeChat Message Style"
+    default n
+    help
+        使用微信聊天界面风格
+
+config USE_ESP_WAKE_WORD
+    bool "Enable Wake Word Detection (without AFE)"
+    default n
+    depends on IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C5 || IDF_TARGET_ESP32C6 || (IDF_TARGET_ESP32 && SPIRAM)
+    help
+        支持 ESP32 C3、ESP32 C5 与 ESP32 C6，增加ESP32支持（需要开启PSRAM）
+
+config USE_AFE_WAKE_WORD
+    bool "Enable Wake Word Detection (AFE)"
+    default y
+    depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
+    help
+        需要 ESP32 S3 与 PSRAM 支持
+
+config USE_CUSTOM_WAKE_WORD
+    bool "Enable Custom Wake Word Detection"
+    default n
+    depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM && (!USE_AFE_WAKE_WORD)
+    help
+        需要 ESP32 S3 与 PSRAM 支持
+        
+config CUSTOM_WAKE_WORD
+    string "Custom Wake Word"
+    default "xiao tu dou"
+    depends on USE_CUSTOM_WAKE_WORD
+    help
+        自定义唤醒词，中文用拼音表示，每个字之间用空格隔开
+
+config CUSTOM_WAKE_WORD_DISPLAY
+    string "Custom Wake Word Display"
+    default "小土豆"
+    depends on USE_CUSTOM_WAKE_WORD
+    help
+        唤醒后发送给服务器的问候语 
+
+config CUSTOM_WAKE_WORD_THRESHOLD
+    int "Custom Wake Word Threshold (%)"
+    default 20
+    range 1 99
+    depends on USE_CUSTOM_WAKE_WORD
+    help
+        自定义唤醒词阈值，范围1-99，越小越敏感，默认10
+
+config USE_AUDIO_PROCESSOR
+    bool "Enable Audio Noise Reduction"
+    default y
+    depends on (IDF_TARGET_ESP32S3 || IDF_TARGET_ESP32P4) && SPIRAM
+    help
+        需要 ESP32 S3 与 PSRAM 支持
+
+config USE_DEVICE_AEC
+    bool "Enable Device-Side AEC"
+    default n
+    help
+        因为性能不够，不建议和微信聊天界面风格同时开启
+config DEVICE_AEC_DEFAULT_OFF
+    bool "Device-Side AEC default off"
+    default y
+    depends on USE_DEVICE_AEC
+    help 
+        是否默认开启实时打断模式（默认关闭实时打断）
+
+config USE_SERVER_AEC
+    bool "Enable Server-Side AEC (Unstable)"
+    default n
+    help
+        启用服务器端 AEC，需要服务器支持
+
+config USE_AUDIO_DEBUGGER
+    bool "Enable Audio Debugger"
+    default n
+    help
+        启用音频调试功能，通过UDP发送音频数据
+
+config USE_ACOUSTIC_WIFI_PROVISIONING
+    bool "Enable Acoustic WiFi Provisioning"
+    default n
+    help
+        启用声波配网功能，使用音频信号传输 WiFi 配置数据
+
+config AUDIO_DEBUG_UDP_SERVER
+    string "Audio Debug UDP Server Address"
+    default "192.168.2.100:8000"
+    depends on USE_AUDIO_DEBUGGER
+    help
+        UDP服务器地址，格式: IP:PORT，用于接收音频调试数据
+
+config RECEIVE_CUSTOM_MESSAGE
+    bool "Enable Custom Message Reception"
+    default n
+    help
+        启用接收自定义消息功能，允许设备接收来自服务器的自定义消息（最好通过 MQTT 协议）
+
+choice I2S_TYPE_TAIJIPI_S3
+    depends on BOARD_TYPE_ESP32S3_Taiji_Pi
+    prompt "taiji-pi-S3 I2S Type"
+    default TAIJIPAI_I2S_TYPE_STD
+    help
+        I2S 类型选择
+    config TAIJIPAI_I2S_TYPE_STD
+        bool "I2S Type STD"
+    config TAIJIPAI_I2S_TYPE_PDM
+        bool "I2S Type PDM"
+endchoice
+
+config USE_AUDIO_TEST
+    bool "Enable Audio Test"
+    default n
+    help
+        启用音频测试功能
+
+config MCP_TOOLCALL_DEFAULT_STACK_SIZE
+    int "mcp toolcall default stack size"
+    depends on IOT_PROTOCOL_MCP
+    default 6144
+    
+config SPEAKING_FIRST_MUTE_TIME
+    int "Time to mute before speaking"
+    default 0
+    help
+        讲话之前静音时间
+
+menu "wifi"
+    menu "wifi config mode"
+        choice
+            prompt "Net Configuration"
+            default USE_SOFTAP_NET_CONFIGURING
+            help
+                Select net configuration
+
+            config USE_SOFTAP_NET_CONFIGURING
+                bool "SoftAP"
+            config USE_BLUFI_NET_CONFIGURING
+                select BLUFI_WIFICFG_ENABLED
+                bool "Blufi"
+        endchoice
+
+        config WIFI_CONFIG_MODE_SSID_PREFIX
+            depends on USE_SOFTAP_NET_CONFIGURING
+            string "wifi config mode ssid prefix"
+            default "xiaozhi"
+
+        config WIFI_CONFIG_MODE_FORMAT_DISPLAY
+            depends on USE_SOFTAP_NET_CONFIGURING
+            bool "wifi config mode format display"
+            default n
+
+        config WIFI_CONFIG_MODE_AUTO_DELAY_RELEASE_DECODER_TIME
+            int "wifi config mode delay auto release decoder time"
+            default -1
+    endmenu
+
+    config SLEEP_MODE_IGNORE_WIFI_STATUS
+        bool "sleep mode ignore wifi status"
+        default n
+        help
+            进入休眠模式时是否忽略WiFi状态
+
+    config WIFI_WAIT_FOR_CONNECTED_TIME
+        int "wifi wait for connected time"
+        default 60
+        help
+            首次等待WiFi连接时间
+endmenu
+
+menu "ui"
+    config UI_STATUS_BAR_PAD
+        int "Status Sar Pad"
+        default 2
+        help
+            状态栏左右间距  
+endmenu
+
+config USE_AUDIO_CODEC_ENCODE_OPUS
+    select USE_CUSTOM_TASK_STACK_SIZE
+    bool "use audio codec encode opus"
+    default y
+
+config USE_AUDIO_CODEC_DECODE_OPUS
+    select USE_CUSTOM_TASK_STACK_SIZE
+    bool "use audio codec decode opus"
+    default n
+
+config USE_CUSTOM_TASK_STACK_SIZE
+    bool "use custom task stack size"
+    default n
+
+config OPUS_CODEC_TASK_STACK_SIZE
+    depends on USE_CUSTOM_TASK_STACK_SIZE
+    int "opus_codec task stack size"
+    default 2048 if ((IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32C3) && (USE_AUDIO_CODEC_ENCODE_OPUS && USE_AUDIO_CODEC_DECODE_OPUS))
+    default 8960 if ((IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32C3) && (USE_AUDIO_CODEC_ENCODE_OPUS))
+    default 26624 if ((IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32C3))
+    default 28672
+
+config AUDIO_INPUT_TASK_STACK_SIZE
+    depends on USE_CUSTOM_TASK_STACK_SIZE
+    int "audio_input task stack size"
+    default 2048 if IDF_TARGET_ESP32C2
+    default 6144
+
+config AUDIO_OUTPUT_TASK_STACK_SIZE
+    depends on USE_CUSTOM_TASK_STACK_SIZE
+    int "audio_output task stack size"
+    default 2048 if IDF_TARGET_ESP32C2
+    default 4096
+
+config STT_SIMPLIFIED_CHINESE_TO_TRADITIONAL_CHINESE
+    bool "STT Simplified Chinese to Traditional Chinese"
+    default n
+    help
+        将语音识别结果从简体中文转换为繁体中文
+
+config START_CHAT_ON_POWER_ON
+    bool "start char after power on"
+    default n
+    help
+        在开机后立即开始对话并回复一句话
+
+config ENABLE_CAMERA_SOUND
+    bool "是否开启摄像头的拍照音效"
+    default n
+    help 
+        在拍照的时候播放咔嚓音效
+
+endmenu

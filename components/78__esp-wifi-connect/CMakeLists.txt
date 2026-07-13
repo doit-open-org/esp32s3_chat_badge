@@ -1,0 +1,41 @@
+
+if(CONFIG_LANGUAGE_VI_VN)
+    set(HTML_FILES
+        "assets/vn/wifi_configuration.html"
+        "assets/vn/wifi_configuration_done.html"
+    )
+elseif(CONFIG_LANGUAGE_ID_ID)
+    set(HTML_FILES
+        "assets/international/wifi_configuration.html"
+        "assets/international/wifi_configuration_done.html"
+    )
+elseif(CONFIG_LANGUAGE_AR_SA)
+    set(HTML_FILES
+        "assets/international/wifi_configuration.html"
+        "assets/international/wifi_configuration_done.html"
+    )
+else()
+    set(HTML_FILES
+        "assets/wifi_configuration.html"
+        "assets/wifi_configuration_done.html"
+    )
+endif()
+
+
+idf_component_register(
+    SRCS
+        "wifi_configuration_ap.cc"
+        "wifi_station.cc"
+        "ssid_manager.cc"
+        "dns_server.cc"
+    INCLUDE_DIRS
+        "include"
+    EMBED_TXTFILES
+    ${HTML_FILES}
+    REQUIRES
+    	"esp_timer"
+        "esp_http_server"
+        "esp_wifi"
+        "nvs_flash"
+        "json"
+)

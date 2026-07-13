@@ -1,0 +1,99 @@
+menu "MIN_PROGRAM_PSD_Configuration"
+    config SUPPORT_MINI_PROGRAMS_REPLACE_PSD
+        bool "支持小程序素材替换（VPG动画）"
+        depends on IDF_TARGET_ESP32S3
+        help 
+            支持小程序素材替换（VPG动画），素材存储在SD卡的/sdcard/material/目录下
+            
+    choice
+        prompt "选择素材存储数量"
+            default USE_PSD_ONE
+        depends on SUPPORT_MINI_PROGRAMS_REPLACE_PSD
+        help
+            选择素材存储方式（素材存储在SD卡中）
+    config USE_PSD_ONE
+        bool "只存一个素材"
+        default y
+        depends on SUPPORT_MINI_PROGRAMS_REPLACE_PSD
+        help
+            只存一个素材（存储在SD卡中）
+    config USE_PSD_MULTIPLE
+        bool "存多个素材"
+        default n
+        depends on SUPPORT_MINI_PROGRAMS_REPLACE_PSD
+        help
+            存多个素材（存储在SD卡中）
+    endchoice
+
+    config USE_PSD_ONE_FILE_NAME
+        string "SD卡中唯一素材的文件名"
+        depends on USE_PSD_ONE
+        default "vpg_first"
+        help
+            设置 SD卡中唯一素材的文件名（存储在 /sdcard/material/ 目录下）。
+
+    config USE_PSD_MULTIPLE_NUM
+        int "SD卡中同时存在的素材数量"
+        depends on USE_PSD_MULTIPLE
+        default 3
+        range 2 8
+        help
+            设置 SD卡中同时缓存的素材最大个数（2-8个），素材存储在 /sdcard/material/ 目录下。
+
+    config USE_PSD_MULTIPLE_FILE_FIRST
+        string "素材文件名 #1"
+        default "vpg_first"
+        depends on USE_PSD_MULTIPLE_NUM >= 1
+        help
+            第 1 个素材文件名称，最终存储为 vpg1.dat（JPG格式）或 vpg1.dat（VPG格式）
+
+    config USE_PSD_MULTIPLE_FILE_SECOND
+        string "素材文件名 #2"
+        default "vpg_second"
+        depends on USE_PSD_MULTIPLE_NUM >= 2
+        help
+            第 2 个素材文件名称，最终存储为 vpg2.dat
+
+    config USE_PSD_MULTIPLE_FILE_THIRD
+        string "素材文件名 #3"
+        default "vpg_third"
+        depends on USE_PSD_MULTIPLE_NUM >= 3
+        help
+            第 3 个素材文件名称，最终存储为 vpg3.dat
+
+    config USE_PSD_MULTIPLE_FILE_FOURTH
+        string "素材文件名 #4"
+        default "vpg_fourth"
+        depends on USE_PSD_MULTIPLE_NUM >= 4
+        help
+            第 4 个素材文件名称，最终存储为 vpg4.dat
+
+    config USE_PSD_MULTIPLE_FILE_FIFTH
+        string "素材文件名 #5"
+        default "vpg_fifth"
+        depends on USE_PSD_MULTIPLE_NUM >= 5
+        help
+            第 5 个素材文件名称，最终存储为 vpg5.dat
+
+    config USE_PSD_MULTIPLE_FILE_SIXTH
+        string "素材文件名 #6"
+        default "vpg_sixth"
+        depends on USE_PSD_MULTIPLE_NUM >= 6
+        help
+            第 6 个素材文件名称，最终存储为 vpg6.dat
+
+    config USE_PSD_MULTIPLE_FILE_SEVENTH
+        string "素材文件名 #7"
+        default "vpg_seventh"
+        depends on USE_PSD_MULTIPLE_NUM >= 7
+        help
+            第 7 个素材文件名称，最终存储为 vpg7.dat
+
+    config USE_PSD_MULTIPLE_FILE_EIGHTH
+        string "素材文件名 #8"
+        default "vpg_eighth"
+        depends on USE_PSD_MULTIPLE_NUM >= 8
+        help
+            第 8 个素材文件名称，最终存储为 vpg8.dat
+
+endmenu

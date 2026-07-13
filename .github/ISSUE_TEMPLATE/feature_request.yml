@@ -1,0 +1,40 @@
+name: Feature request / 功能建议
+description: Propose a focused product or developer improvement.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the concrete user, hardware, manufacturing, or maintenance problem.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: compatibility
+    attributes:
+      label: Compatibility impact
+      options:
+        - No persistent/protocol/hardware change
+        - Requires sdkconfig migration
+        - Changes storage or partition layout
+        - Changes hardware or pin map
+        - Changes OTA/protocol compatibility
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: test
+    attributes:
+      label: Suggested validation
+      description: Explain how the feature can be verified on hardware or in CI.
