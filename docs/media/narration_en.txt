@@ -1,0 +1,17 @@
+00:00  This video demonstrates the ESP32-S3 Chat Badge with the Sibo Assistant WeChat Mini Program.
+00:07  Open WeChat and scan the QR code on the badge to enter the Sibo Assistant Mini Program.
+00:15  With the badge in provisioning mode, select the device found by the Mini Program.
+00:20  Choose a 2.4 gigahertz Wi-Fi network and enter its password.
+00:31  Submit the network details and wait for the badge to connect.
+00:38  Once connected, the badge enters its normal operating screen.
+00:43  Select a watch face in the Mini Program.
+00:46  When prompted, allow the Mini Program to access the photo library.
+00:52  Choose an image from the phone photo library.
+01:03  Confirm the image and tap Upload.
+01:16  The image upload is complete.
+01:27  Next, choose a video from the phone photo library.
+01:37  Confirm the video and tap Upload.
+01:43  Larger video files may take a moment to upload.
+01:50  The video upload is complete.
+02:10  Finally, here is a voice interaction demo.
+02:17  Hello, Xiaozhi. How is the weather today?
