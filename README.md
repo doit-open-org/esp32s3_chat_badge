@@ -254,6 +254,7 @@ python3 tools/check_repo.py
 技术交流、硬件定制或商业合作：
 
 - Email: [lihonggang@doit.am](mailto:lihonggang@doit.am)
+- YOUTUBE: [https://youtu.be/hPDQxNm4Gzo](https://youtu.be/hPDQxNm4Gzo)
 
 微信：
 
