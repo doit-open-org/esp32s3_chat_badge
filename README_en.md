@@ -264,6 +264,7 @@ Read [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) before distributing bina
 For technical discussion, hardware customization, or business cooperation:
 
 - Email: [lihonggang@doit.am](mailto:lihonggang@doit.am)
+- YOUTUBE: [https://youtu.be/hPDQxNm4Gzo](https://youtu.be/hPDQxNm4Gzo)
 
 WeChat:
 
