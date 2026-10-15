@@ -188,6 +188,16 @@ idf.py -B build menuconfig
 
 修改分区表后必须整片擦除并重新烧录，旧 OTA 包也不再兼容。
 
+## 使用演示
+
+以下视频演示设备进入配网模式后，通过“四博小助手”微信小程序扫描设备二维码、连接 2.4 GHz Wi-Fi、选择表盘，以及向设备上传图片和视频，最后展示语音交互：
+
+- [中文旁白演示视频](docs/media/esp32s3_chat_badge_demo_zh.mp4)
+- [English narrated demo](docs/media/esp32s3_chat_badge_demo_en.mp4)
+- [中文旁白时间轴](docs/media/narration_zh.txt)
+
+视频文件也可以下载后使用 iMovie、QuickTime Player 或其他常见播放器打开。
+
 ## 文档导航
 
 | 文档 | 中文 | English |

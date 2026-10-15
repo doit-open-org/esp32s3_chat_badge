@@ -475,16 +475,16 @@ void home_view_refresh_image(void)
     else
         strncpy(lvgl_path, sd_path, sizeof(lvgl_path) - 1);
 
-    ESP_LOGI(TAG, "删除上传UI: img=%p, label=%p", vw.upload_img, vw.upload_label);
+    ESP_LOGD(TAG, "删除上传UI: img=%p, label=%p", vw.upload_img, vw.upload_label);
     lvgl_port_lock(-1);
 
     // 【修复】如果引用为NULL，尝试通过遍历root的子对象来查找并删除上传UI
     if (!vw.upload_img && !vw.upload_label && vw.root)
     {
-        ESP_LOGI(TAG,
+        ESP_LOGD(TAG,
                  "Upload UI references are NULL, searching in root children...");
         uint32_t child_cnt = lv_obj_get_child_count(vw.root);
-        ESP_LOGI(TAG, "Root has %lu children", (unsigned long)child_cnt);
+        ESP_LOGD(TAG, "Root has %lu children", (unsigned long)child_cnt);
 
         // 从后往前遍历，避免删除时索引变化
         for (int32_t i = child_cnt - 1; i >= 0; i--)
@@ -496,7 +496,7 @@ void home_view_refresh_image(void)
                 if (lv_obj_check_type(child, &lv_image_class) ||
                     lv_obj_check_type(child, &lv_label_class))
                 {
-                    ESP_LOGI(TAG, "Found and deleting potential upload UI child: %p",
+                    ESP_LOGD(TAG, "Found and deleting potential upload UI child: %p",
                              child);
                     lv_obj_del(child);
                 }

@@ -135,9 +135,7 @@ esp_lcd_new_panel_jd9855(const esp_lcd_panel_io_handle_t io,
   *ret_panel = &(jd9855->base);
   ESP_LOGD(TAG, "new jd9855 panel @%p", jd9855);
 
-  ESP_LOGI(TAG, "LCD panel create success, version: %d.%d.%d",
-           ESP_LCD_ST77916_VER_MAJOR, ESP_LCD_ST77916_VER_MINOR,
-           ESP_LCD_ST77916_VER_PATCH);
+  ESP_LOGI(TAG, "JD9855 LCD panel create success");
 
   return ESP_OK;
 

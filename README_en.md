@@ -188,6 +188,16 @@ The fixed 16 MB layout is:
 
 Changing the partition table requires a full flash erase and makes existing OTA packages incompatible.
 
+## Usage demo
+
+The following videos show the complete workflow: putting the badge into provisioning mode, scanning its QR code with the Sibo Assistant WeChat Mini Program, connecting it to 2.4 GHz Wi-Fi, selecting a watch face, uploading an image and a video, and using voice interaction:
+
+- [English narrated demo](docs/media/esp32s3_chat_badge_demo_en.mp4)
+- [中文旁白演示视频](docs/media/esp32s3_chat_badge_demo_zh.mp4)
+- [English narration timeline](docs/media/narration_en.txt)
+
+The video files can be downloaded and opened in iMovie, QuickTime Player, or another standard media player.
+
 ## Documentation
 
 | Topic | English | 中文 |

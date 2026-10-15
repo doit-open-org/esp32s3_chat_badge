@@ -14,6 +14,10 @@
 #include <dirent.h>
 #include <errno.h>
 #include <esp_log.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -45,6 +49,7 @@ typedef struct
     uint32_t count;
     uint32_t capacity;
     uint32_t current_index;
+    uint32_t max_index; // Reserve filenames even if their content fails validation.
 } material_group_t;
 
 // 目录配置
@@ -82,7 +87,7 @@ static bool is_ext_supported(const char *ext, material_type_t type)
 static bool parse_filename(const char *name, uint32_t *idx, char *ext)
 {
     const char *dot = strrchr(name, '.');
-    if (!dot)
+    if (!dot || dot == name || strlen(dot) >= 8)
         return false;
 
     strncpy(ext, dot, 7);
@@ -93,19 +98,20 @@ static bool parse_filename(const char *name, uint32_t *idx, char *ext)
             *p += 32;
     }
 
-    char num[64];
-    size_t len = dot - name;
-    if (len >= sizeof(num))
+    uint32_t value = 0;
+    for (const char *p = name; p < dot; p++)
+    {
+        if (*p < '0' || *p > '9')
+            return false;
+        uint32_t digit = (uint32_t)(*p - '0');
+        if (value > (UINT32_MAX - digit) / 10)
+            return false;
+        value = value * 10 + digit;
+    }
+    if (value == 0)
         return false;
-    strncpy(num, name, len);
-    num[len] = '\0';
 
-    char *end;
-    long val = strtol(num, &end, 10);
-    if (end == num || val <= 0)
-        return false;
-
-    *idx = (uint32_t)val;
+    *idx = value;
     return true;
 }
 
@@ -115,7 +121,9 @@ static void sort_files(material_group_t *g)
     {
         for (uint32_t j = i + 1; j < g->count; j++)
         {
-            if (g->files[i].index > g->files[j].index)
+            if (g->files[i].index > g->files[j].index ||
+                (g->files[i].index == g->files[j].index &&
+                 strcmp(g->files[i].filepath, g->files[j].filepath) > 0))
             {
                 material_file_t tmp = g->files[i];
                 g->files[i] = g->files[j];
@@ -125,43 +133,41 @@ static void sort_files(material_group_t *g)
     }
 }
 
-static void normalize_indices(material_type_t type)
-{
-    material_group_t *g = &g_groups[type];
-    const char *dir = dir_configs[type].dir_path;
-
-    for (uint32_t i = 0; i < g->count; i++)
-    {
-        uint32_t new_idx = i + 1;
-        if (g->files[i].index != new_idx)
-        {
-            char new_path[512];
-            snprintf(new_path, sizeof(new_path), "%s/%02lu%s", dir,
-                     (unsigned long)new_idx, g->files[i].extension);
-
-            if (rename(g->files[i].filepath, new_path) == 0)
-            {
-                g->files[i].index = new_idx;
-                strncpy(g->files[i].filepath, new_path,
-                        sizeof(g->files[i].filepath) - 1);
-            }
-        }
-    }
-}
-
 static bool validate_file(const char *path, const char *ext)
 {
     struct stat st;
-    if (stat(path, &st) != 0 || st.st_size < 32)
+    if (stat(path, &st) != 0)
+    {
+        int stat_errno = errno;
+        ESP_LOGE(TAG, "SD_DIAG validate stat failed: %s errno=%d (%s)",
+                 path, stat_errno, strerror(stat_errno));
         return false;
+    }
+    if (st.st_size < 32)
+    {
+        ESP_LOGW(TAG, "SD_DIAG validate file too small: %s size=%ld", path, (long)st.st_size);
+        return false;
+    }
 
     FILE *f = fopen(path, "rb");
     if (!f)
+    {
+        int open_errno = errno;
+        ESP_LOGE(TAG, "SD_DIAG validate fopen failed: %s errno=%d (%s)",
+                 path, open_errno, strerror(open_errno));
         return false;
+    }
 
     uint8_t hdr[4] = {0};
     size_t n = fread(hdr, 1, 4, f);
+    int read_errno = errno;
+    int read_error = ferror(f);
     fclose(f);
+    if (read_error)
+    {
+        ESP_LOGE(TAG, "SD_DIAG validate read failed: path=%s bytes=%u errno=%d (%s)",
+                 path, (unsigned)n, read_errno, strerror(read_errno));
+    }
 
     if (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)
     {
@@ -200,6 +206,7 @@ static void scan_directory(material_type_t type)
     g->files = NULL;
     g->count = 0;
     g->capacity = 0;
+    g->max_index = 0;
     // 注意：不重置 current_index，后面会处理
 
     // 确保目录存在
@@ -212,6 +219,9 @@ static void scan_directory(material_type_t type)
     DIR *dir = opendir(dir_path);
     if (!dir)
     {
+        int dir_errno = errno;
+        ESP_LOGE(TAG, "SD_DIAG opendir failed: %s errno=%d (%s)",
+                 dir_path, dir_errno, strerror(dir_errno));
         // 目录打开失败，重置索引
         g->current_index = 0;
         return;
@@ -238,35 +248,48 @@ static void scan_directory(material_type_t type)
             continue;
         if (!is_ext_supported(ext, type))
             continue;
+        if (idx > g->max_index)
+            g->max_index = idx;
 
-        char path[512];
-        snprintf(path, sizeof(path), "%s/%02lu%s", dir_path, (unsigned long)idx,
-                 ext);
+        // Use the real directory entry. Different names can share a numeric
+        // index (e.g. 1.jpg and 01.jpg) while referring to different files.
+        char path[sizeof(g->files[0].filepath)];
+        int path_length = snprintf(path, sizeof(path), "%s/%s", dir_path, ent->d_name);
+        if (path_length < 0 || (size_t)path_length >= sizeof(path))
+        {
+            ESP_LOGW(TAG, "Skipping material with an overlong filename: %s", ent->d_name);
+            continue;
+        }
 
         if (!validate_file(path, ext))
         {
-            unlink(path);
+            // An I/O failure does not prove corruption. Scanning must not
+            // delete files; explicit user deletion is handled separately.
+            ESP_LOGW(TAG, "SD_DIAG scan skipping rejected file: %s", path);
             continue;
         }
 
         // 扩容
         if (g->count >= g->capacity)
         {
-            g->capacity *= 2;
-            g->files = realloc(g->files, g->capacity * sizeof(material_file_t));
-            if (!g->files)
+            uint32_t new_capacity = g->capacity * 2;
+            material_file_t *new_files = realloc(g->files, new_capacity * sizeof(material_file_t));
+            if (!new_files)
                 break;
+            g->files = new_files;
+            g->capacity = new_capacity;
         }
 
         material_file_t *f = &g->files[g->count++];
         f->index = idx;
         strncpy(f->filepath, path, sizeof(f->filepath) - 1);
+        f->filepath[sizeof(f->filepath) - 1] = '\0';
         strncpy(f->extension, ext, sizeof(f->extension) - 1);
+        f->extension[sizeof(f->extension) - 1] = '\0';
     }
     closedir(dir);
 
     sort_files(g);
-    normalize_indices(type);
 
     // 恢复之前保存的索引，确保不越界
     if (g->count == 0)
@@ -511,6 +534,8 @@ bool doit_file_add_downloaded(const char *filepath, material_type_t type)
     char ext[8];
     if (!parse_filename(filename, &idx, ext))
         return false;
+    if (idx > g->max_index)
+        g->max_index = idx;
 
     // 检查是否需要扩容
     if (g->count >= g->capacity)
@@ -666,8 +691,7 @@ doit_file_result_t doit_file_delete_current(void)
     }
     g->count--;
 
-    // 重新规范化索引
-    normalize_indices(g_current_type);
+    // Keep remaining filenames stable, including saved chat-background paths.
 
     // 调整当前索引
     if (g->count == 0)
@@ -715,14 +739,11 @@ uint32_t doit_file_get_next_download_index(material_type_t type)
         return 1;
 
     material_group_t *g = &g_groups[type];
-    if (g->count == 0)
-        return 1;
-
-    uint32_t max = 0;
-    for (uint32_t i = 0; i < g->count; i++)
+    uint32_t max = g->max_index;
+    if (max == UINT32_MAX)
     {
-        if (g->files[i].index > max)
-            max = g->files[i].index;
+        ESP_LOGE(TAG, "Material filename index exhausted");
+        return 0;
     }
     return max + 1;
 }

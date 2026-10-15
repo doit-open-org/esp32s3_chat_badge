@@ -7,6 +7,7 @@
 #include "device_state.h"
 #include <esp_log.h>
 #include <esp_timer.h>
+#include <wifi_station.h>
 #include <time.h>
 #include <sys/time.h>
 #include "assets/lang_config.h"
@@ -18,7 +19,6 @@
 // 默认值：0表示从不关机
 #define DEFAULT_SLEEP_TIME 0
 
-extern "C" bool blufi_wifi_sta_get_connect_status(void);
 uint32_t ui_tool_get_sleep_time(void) {
     Settings settings(SETTINGS_NAMESPACE, false);
     int32_t time = settings.GetInt(KEY_SLEEP_TIME, DEFAULT_SLEEP_TIME);
@@ -205,5 +205,5 @@ void ui_tool_play_alarm_sound(void)
 
 uint8_t ui_tool_is_wifi_connected(void)
 {
-    return blufi_wifi_sta_get_connect_status() ? 1 : 0;
+    return WifiStation::GetInstance().IsConnected() ? 1 : 0;
 }

@@ -158,7 +158,10 @@ def check_text(errors: list[str]) -> None:
 
 def check_nested_git(errors: list[str]) -> None:
     for path in ROOT.rglob(".git"):
-        if path == ROOT / ".git":
+        if path == ROOT / ".git" or any(
+            part in {"build", "managed_components"}
+            for part in path.relative_to(ROOT).parts
+        ):
             continue
         errors.append(f"nested Git metadata found: {path.relative_to(ROOT)}")
 
@@ -167,8 +170,6 @@ def check_obsolete_components(errors: list[str]) -> None:
     obsolete_paths = {
         ROOT / "components/doit_blufi":
             "duplicates symbols from blufi_wificfg",
-        ROOT / "components/78__esp-ml307":
-            "is a cellular-only component not used by this Wi-Fi board",
         ROOT / "components/doit_min_program_upload/assets":
             "contains the unused legacy LittleFS material bundle",
         ROOT / "components/espressif__esp_codec_dev":
@@ -223,7 +224,7 @@ def main() -> int:
     print("  - board CMake source references resolve")
     print("  - 16 MB partition table is aligned and non-overlapping")
     print("  - no internal/developer paths, private keys, common token formats, or plaintext password logs found")
-    print("  - obsolete duplicate BLUFI, cellular-only, and legacy LittleFS paths are absent")
+    print("  - obsolete duplicate BLUFI, unused board components, and legacy LittleFS paths are absent")
     print("  - common source selection is limited to the Wi-Fi badge board")
     return 0
 

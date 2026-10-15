@@ -158,11 +158,7 @@ std::string Board::GetSystemInfoJson() {
     auto display = GetDisplay();
     if (display) {
         json += R"("display":{)";
-        if (dynamic_cast<OledDisplay*>(display)) {
-            json += R"("monochrome":)" + std::string("true") + R"(,)";
-        } else {
-            json += R"("monochrome":)" + std::string("false") + R"(,)";
-        }
+        json += R"("monochrome":false,)";
         json += R"("width":)" + std::to_string(display->width()) + R"(,)";
         json += R"("height":)" + std::to_string(display->height()) + R"(,)";
         json.pop_back(); // Remove the last comma
