@@ -6,7 +6,15 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <esp_camera.h>  // 包含ESP32相机驱动的定义，避免重复定义pixformat_t和camera_fb_t
+#include <stdbool.h>
+
+// Pixel formats used by the display encoder; no camera driver is required.
+typedef enum {
+    IMAGE_PIXEL_FORMAT_RGB565,
+    IMAGE_PIXEL_FORMAT_RGB888,
+    IMAGE_PIXEL_FORMAT_GRAYSCALE,
+    IMAGE_PIXEL_FORMAT_YUV422,
+} image_pixel_format_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +37,7 @@ typedef size_t (*jpg_out_cb)(void *arg, size_t index, const void *data, size_t l
  * @param src_len   源图像数据长度
  * @param width     图像宽度
  * @param height    图像高度  
- * @param format    图像格式 (PIXFORMAT_RGB565, PIXFORMAT_RGB888, 等)
+ * @param format    图像格式 (IMAGE_PIXEL_FORMAT_RGB565, IMAGE_PIXEL_FORMAT_RGB888, 等)
  * @param quality   JPEG质量 (1-100)
  * @param out       输出JPEG数据指针 (需要调用者释放)
  * @param out_len   输出JPEG数据长度
@@ -37,7 +45,7 @@ typedef size_t (*jpg_out_cb)(void *arg, size_t index, const void *data, size_t l
  * @return true 成功, false 失败
  */
 bool image_to_jpeg(uint8_t *src, size_t src_len, uint16_t width, uint16_t height, 
-                   pixformat_t format, uint8_t quality, uint8_t **out, size_t *out_len);
+                   image_pixel_format_t format, uint8_t quality, uint8_t **out, size_t *out_len);
 
 /**
  * @brief 将图像格式转换为JPEG（回调版本）
@@ -59,7 +67,7 @@ bool image_to_jpeg(uint8_t *src, size_t src_len, uint16_t width, uint16_t height
  * @return true 成功, false 失败
  */
 bool image_to_jpeg_cb(uint8_t *src, size_t src_len, uint16_t width, uint16_t height, 
-                      pixformat_t format, uint8_t quality, jpg_out_cb cb, void *arg);
+                      image_pixel_format_t format, uint8_t quality, jpg_out_cb cb, void *arg);
 
 #ifdef __cplusplus
 }

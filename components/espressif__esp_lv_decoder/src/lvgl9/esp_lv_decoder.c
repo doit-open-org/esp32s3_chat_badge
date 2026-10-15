@@ -9,6 +9,7 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "esp_check.h"
+#include "esp_heap_caps.h"
 
 #include "lvgl.h"
 #include "lvgl_private.h"
@@ -16,6 +17,7 @@
 #include "esp_lv_decoder.h"
 #include "esp_lv_decoder_config.h"
 #include <string.h>
+#include <strings.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -382,7 +384,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         }
         if (src_type == LV_IMAGE_SRC_FILE) {
             const char *ext = lv_fs_get_ext(dsc->src);
-            if (ext && lv_strcmp(ext, "png") == 0) {
+            if (ext && strcasecmp(ext, "png") == 0) {
                 uint8_t hdr[8];
                 uint32_t rn;
                 lv_fs_seek(&dsc->file, 0, LV_FS_SEEK_SET);
@@ -392,7 +394,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
                     is_png = true;
                 }
             }
-            if (ext && lv_strcmp(ext, "qoi") == 0) {
+            if (ext && strcasecmp(ext, "qoi") == 0) {
                 uint8_t hdr[14];
                 uint32_t rn;
                 lv_fs_seek(&dsc->file, 0, LV_FS_SEEK_SET);
@@ -493,7 +495,7 @@ static lv_result_t decoder_info(lv_image_decoder_t * decoder, lv_image_decoder_d
         if (src_type == LV_IMAGE_SRC_FILE) {
             // Check file extension first
             const char* ext = lv_fs_get_ext(dsc->src);
-            if (ext && (lv_strcmp(ext, "jpg") == 0 || lv_strcmp(ext, "jpeg") == 0)) {
+            if (ext && (strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0)) {
                 is_jpeg = true;
             }
 
@@ -574,7 +576,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
     bool is_pjpg = false;
     if (dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char *ext = lv_fs_get_ext(dsc->src);
-        if (ext && lv_strcmp(ext, "pjpg") == 0) {
+        if (ext && strcasecmp(ext, "pjpg") == 0) {
             is_pjpg = true;
         }
     } else if (dsc->src_type == LV_IMAGE_SRC_VARIABLE) {
@@ -598,7 +600,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         // First, try to detect by file extension (more reliable with mmap_assets)
         if (dsc->src_type == LV_IMAGE_SRC_FILE) {
             const char *ext = lv_fs_get_ext(dsc->src);
-            if (ext && (lv_strcmp(ext, "spng") == 0 || lv_strcmp(ext, "sjpg") == 0)) {
+            if (ext && (strcasecmp(ext, "spng") == 0 || strcasecmp(ext, "sjpg") == 0)) {
                 is_sp = true;
             }
         }
@@ -639,7 +641,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         bool try_qoi = false;
         if (dsc->src_type == LV_IMAGE_SRC_FILE) {
             const char *ext = lv_fs_get_ext(dsc->src);
-            if (ext && lv_strcmp(ext, "qoi") == 0) {
+            if (ext && strcasecmp(ext, "qoi") == 0) {
                 try_qoi = true;
             }
         } else if (dsc->src_type == LV_IMAGE_SRC_VARIABLE) {
@@ -662,7 +664,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         bool try_png = false;
         if (dsc->src_type == LV_IMAGE_SRC_FILE) {
             const char *ext = lv_fs_get_ext(dsc->src);
-            if (ext && lv_strcmp(ext, "png") == 0) {
+            if (ext && strcasecmp(ext, "png") == 0) {
                 try_png = true;
             }
         } else if (dsc->src_type == LV_IMAGE_SRC_VARIABLE) {
@@ -685,7 +687,7 @@ static lv_result_t decoder_open(lv_image_decoder_t * decoder, lv_image_decoder_d
         bool is_jpeg = false;
         if (dsc->src_type == LV_IMAGE_SRC_FILE) {
             const char *ext = lv_fs_get_ext(dsc->src);
-            if (ext && (lv_strcmp(ext, "jpg") == 0 || lv_strcmp(ext, "jpeg") == 0)) {
+            if (ext && (strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0)) {
                 is_jpeg = true;
             }
         } else if (dsc->src_type == LV_IMAGE_SRC_VARIABLE) {
@@ -1159,6 +1161,32 @@ failed:
     return data;
 }
 
+static const char *jpeg_error_name(jpeg_error_t error)
+{
+    switch (error) {
+    case JPEG_ERR_OK: return "JPEG_ERR_OK";
+    case JPEG_ERR_FAIL: return "JPEG_ERR_FAIL";
+    case JPEG_ERR_NO_MEM: return "JPEG_ERR_NO_MEM";
+    case JPEG_ERR_NO_MORE_DATA: return "JPEG_ERR_NO_MORE_DATA";
+    case JPEG_ERR_INVALID_PARAM: return "JPEG_ERR_INVALID_PARAM";
+    case JPEG_ERR_BAD_DATA: return "JPEG_ERR_BAD_DATA";
+    case JPEG_ERR_UNSUPPORT_FMT: return "JPEG_ERR_UNSUPPORT_FMT";
+    case JPEG_ERR_UNSUPPORT_STD: return "JPEG_ERR_UNSUPPORT_STD";
+    default: return "UNKNOWN_JPEG_ERROR";
+    }
+}
+
+static void jpeg_log_heap(const char *stage)
+{
+    ESP_LOGE(TAG, "JPEG_DIAG heap: stage=%s internal_free=%u internal_largest=%u"
+             " psram_free=%u psram_largest=%u",
+             stage,
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+}
+
 static lv_res_t jpeg_decode_header(uint32_t *w, uint32_t *h, const uint8_t *in, uint32_t insize,
                                    jpeg_pixel_format_t out_fmt,
                                    jpeg_dec_handle_t *jpeg_dec_out, jpeg_dec_io_t **jpeg_io_out,
@@ -1169,20 +1197,30 @@ static lv_res_t jpeg_decode_header(uint32_t *w, uint32_t *h, const uint8_t *in, 
         .output_type = out_fmt,
         .rotate = JPEG_ROTATE_0D,
     };
-    jpeg_dec_handle_t jpeg_dec;
-    jpeg_dec_open(&config, &jpeg_dec);
+    jpeg_dec_handle_t jpeg_dec = NULL;
+    ret = jpeg_dec_open(&config, &jpeg_dec);
     if (!jpeg_dec) {
-        ESP_LOGE(TAG, "Failed to open jpeg decoder");
+        ESP_LOGE(TAG, "JPEG_DIAG open failed: code=%d (%s) input_bytes=%" PRIu32 " out_format=%d",
+                 (int)ret, jpeg_error_name(ret), insize, (int)out_fmt);
+        jpeg_log_heap("open");
         return LV_RESULT_INVALID;
     }
 
     jpeg_dec_io_t *jpeg_io = malloc(sizeof(jpeg_dec_io_t));
     jpeg_dec_header_info_t *header_info = malloc(sizeof(jpeg_dec_header_info_t));
+    if (!jpeg_io || !header_info) {
+        jpeg_log_heap("io/header allocation");
+    }
     ESP_GOTO_ON_ERROR((jpeg_io && header_info) ? ESP_OK : ESP_ERR_NO_MEM, cleanup, TAG, "alloc jpeg io/header failed");
 
     jpeg_io->inbuf = (unsigned char *)in;
     jpeg_io->inbuf_len = insize;
     ret = jpeg_dec_parse_header(jpeg_dec, jpeg_io, header_info);
+    if (ret != JPEG_ERR_OK) {
+        ESP_LOGE(TAG, "JPEG_DIAG parse_header failed: code=%d (%s) input_bytes=%" PRIu32,
+                 (int)ret, jpeg_error_name(ret), insize);
+        jpeg_log_heap("parse_header");
+    }
     ESP_GOTO_ON_ERROR((ret == JPEG_ERR_OK) ? ESP_OK : ESP_FAIL, cleanup, TAG, "parse jpeg header failed");
     *w = header_info->width;
     *h = header_info->height;
@@ -1230,14 +1268,17 @@ static lv_draw_buf_t * jpeg_decode_jpg(lv_image_decoder_dsc_t * dsc)
     jpeg_dec_io_t *jpeg_io = NULL;
     jpeg_dec_header_info_t *header_info = NULL;
     esp_err_t ret;
+    const char *source_name = dsc->src_type == LV_IMAGE_SRC_FILE ? (const char *)dsc->src : "<memory>";
 
     if (dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char* ext = lv_fs_get_ext(dsc->src);
-        if (!ext || (lv_strcmp(ext, "jpg") != 0 && lv_strcmp(ext, "jpeg") != 0)) {
+        if (!ext || (strcasecmp(ext, "jpg") != 0 && strcasecmp(ext, "jpeg") != 0)) {
             return NULL;
         }
         src_data = alloc_file(dsc->src, &src_data_size);
         if (src_data == NULL) {
+            ESP_LOGE(TAG, "JPEG_DIAG load failed: source=%s", source_name);
+            jpeg_log_heap("load");
             return NULL;
         }
     } else if (dsc->src_type == LV_IMAGE_SRC_VARIABLE) {
@@ -1251,7 +1292,7 @@ static lv_draw_buf_t * jpeg_decode_jpg(lv_image_decoder_dsc_t * dsc)
     lv_color_format_t tgt = get_target_rgb_format();
     jpeg_pixel_format_t out_fmt = (tgt == LV_COLOR_FORMAT_RGB565) ? JPEG_PIXEL_FORMAT_RGB565_LE : JPEG_PIXEL_FORMAT_RGB888;
     ESP_GOTO_ON_ERROR((jpeg_decode_header(&width, &height, src_data, src_data_size, out_fmt, &jpeg_dec, &jpeg_io, &header_info) == LV_RESULT_OK) ? ESP_OK : ESP_FAIL,
-                      cleanup, TAG, "decode JPEG header '%s' failed", (const char*)dsc->src);
+                      cleanup, TAG, "decode JPEG header '%s' failed", source_name);
 
     /* Decide whether we will use HW JPEG path before allocating output buffer */
 #if ESP_LV_ENABLE_HW_JPEG
@@ -1264,6 +1305,9 @@ static lv_draw_buf_t * jpeg_decode_jpg(lv_image_decoder_dsc_t * dsc)
                                     (tgt == LV_COLOR_FORMAT_RGB565) ? LV_COLOR_FORMAT_RGB565 : LV_COLOR_FORMAT_RGB888,
                                     LV_STRIDE_AUTO);
     s_hw_output_allocation = false;
+    if (!decoded) {
+        jpeg_log_heap("image buffer allocation");
+    }
     ESP_GOTO_ON_ERROR(decoded ? ESP_OK : ESP_ERR_NO_MEM, cleanup, TAG, "alloc image buffer '%s' failed", (const char*)dsc->src);
 
 #if ESP_LV_ENABLE_HW_JPEG
@@ -1281,10 +1325,21 @@ static lv_draw_buf_t * jpeg_decode_jpg(lv_image_decoder_dsc_t * dsc)
 #endif
     {
         jpeg_io->outbuf = decoded->data;
-        if (jpeg_dec_process(jpeg_dec, jpeg_io) != JPEG_ERR_OK) {
+        jpeg_error_t process_result = jpeg_dec_process(jpeg_dec, jpeg_io);
+        if (process_result != JPEG_ERR_OK) {
+            ESP_LOGE(TAG, "JPEG_DIAG process failed: source=%s code=%d (%s)"
+                     " input_bytes=%" PRIu32 " width=%" PRIu32 " height=%" PRIu32
+                     " output_bytes=%" PRIu32 " align16=%u",
+                     source_name, (int)process_result, jpeg_error_name(process_result),
+                     src_data_size, width, height, decoded->data_size,
+                     (unsigned)((uintptr_t)decoded->data & 15));
+            if (process_result == JPEG_ERR_NO_MEM) {
+                jpeg_log_heap("process");
+            }
             lv_draw_buf_destroy_user(image_cache_draw_buf_handlers, decoded);
             decoded = NULL;
-            ESP_GOTO_ON_ERROR(ESP_FAIL, cleanup, TAG, "SW JPEG decode '%s' failed", (const char*)dsc->src);
+            ret = ESP_FAIL;
+            goto cleanup;
         }
         if (tgt == LV_COLOR_FORMAT_RGB888) {
             uint8_t *p = jpeg_io->outbuf;
@@ -1325,7 +1380,7 @@ static lv_draw_buf_t * png_decode_rgba(lv_image_decoder_dsc_t * dsc)
 
     if (dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char* ext = lv_fs_get_ext(dsc->src);
-        if (!ext || lv_strcmp(ext, "png") != 0) {
+        if (!ext || strcasecmp(ext, "png") != 0) {
             return NULL;
         }
         src_data = alloc_file(dsc->src, &src_data_size);
@@ -1386,7 +1441,7 @@ static lv_draw_buf_t * qoi_decode_qoi(lv_image_decoder_dsc_t * dsc)
 
     if (dsc->src_type == LV_IMAGE_SRC_FILE) {
         const char* ext = lv_fs_get_ext(dsc->src);
-        if (!ext || lv_strcmp(ext, "qoi") != 0) {
+        if (!ext || strcasecmp(ext, "qoi") != 0) {
             return NULL;
         }
         src_data = alloc_file(dsc->src, &src_data_size);

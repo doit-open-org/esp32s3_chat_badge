@@ -11,6 +11,8 @@ dependencies:
     version: "2.4.0"
     override_path: "../components/78__esp-opus-encoder"
   78/xiaozhi-fonts: "1.5.5"
+  # Provides the shared HTTP, MQTT, UDP and WebSocket interfaces for Wi-Fi.
+  78/esp-ml307: "3.3.5"
 
   espressif/esp_lcd_panel_io_additions: "1.0.1"
   espressif/esp_lcd_touch: "1.2.1"

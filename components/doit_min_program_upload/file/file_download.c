@@ -369,6 +369,13 @@ static doit_file_result_t http_download_chunk(const char *file_url, const char *
     /* 2. 确定材料类型并获取下一个索引 */
     material_type_t type = (strcmp(dir_name, "animal") == 0) ? MATERIAL_TYPE_VPG : MATERIAL_TYPE_IMG;
     uint32_t next_index = doit_file_get_next_download_index(type);
+    if (next_index == 0)
+    {
+        free(file_type);
+        ret.err_code = CL_OPERT_FAIL;
+        download_progress_fail(UI_FAIL_WRITE_ERROR);
+        return ret;
+    }
 
     /* 3. 拼接SD卡完整路径：/sdcard/{dir_name}/{02}.{ext} */
     char *full_path = malloc(64);

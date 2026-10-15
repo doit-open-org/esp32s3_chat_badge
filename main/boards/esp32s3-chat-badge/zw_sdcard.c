@@ -19,6 +19,10 @@
 #include "tinyusb_msc.h"
 #include "tinyusb.h"
 #include <inttypes.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+#include "esp_heap_caps.h"
 
 #define TAG "zw_sdcard"
 #define USB_DETECT_GPIO CHARGE_DETECT
@@ -31,6 +35,8 @@ static bool s_tinyusb_installed = false;
 static bool s_msc_created = false;
 static SemaphoreHandle_t s_mode_mutex = NULL;
 static lv_fs_drv_t fs_drv;
+// These counters cover LVGL callbacks only, not downloads or VPG file handles.
+static uint32_t s_lvgl_open_files;
 
 // USB检测相关
 static bool s_usb_detect_initialized = false;
@@ -38,6 +44,23 @@ static esp_timer_handle_t s_usb_debounce_timer = NULL;
 static void (*s_usb_unplug_callback)(void) = NULL;
 
 // ============== LVGL 文件系统回调 ==============
+
+static void fs_log_open_failure(const char *full_path, int open_errno)
+{
+  ESP_LOGE(TAG, "SD_DIAG fopen failed: path=%s errno=%d (%s)"
+           " task=%s lvgl_open=%" PRIu32 " fatfs_limit=%d usb=%d switching=%d",
+           full_path, open_errno, strerror(open_errno),
+           pcTaskGetName(NULL), __atomic_load_n(&s_lvgl_open_files, __ATOMIC_RELAXED),
+           ZW_SDCARD_MAX_OPEN_FILES, s_usb_mode, s_switching_mode);
+  if (open_errno == ENOMEM)
+  {
+    ESP_LOGE(TAG, "SD_DIAG heap: internal_free=%u internal_largest=%u",
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+  }
+  // Diagnostic calls must not replace the errno of the original fopen().
+  errno = open_errno;
+}
 
 static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
 {
@@ -49,8 +72,6 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     ESP_LOGW(TAG, "fs_open blocked: USB mode active, path: %s", path);
     return NULL;
   }
-
-  ESP_LOGI(TAG, "fs_open called with path: %s", path);
 
   const char *modes;
   if (mode == LV_FS_MODE_WR)
@@ -69,14 +90,16 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
   char full_path[256];
   snprintf(full_path, sizeof(full_path), "%s%s", ZW_SDCARD_MOUNTPOINT, path);
 
+  errno = 0;
   FILE *fp = fopen(full_path, modes);
+  int open_errno = errno;
   if (fp)
   {
-    ESP_LOGI(TAG, "fs_open: File opened successfully");
+    __atomic_add_fetch(&s_lvgl_open_files, 1, __ATOMIC_RELAXED);
   }
   else
   {
-    ESP_LOGE(TAG, "fs_open: Failed to open file: %s", full_path);
+    fs_log_open_failure(full_path, open_errno);
   }
 
   return fp;
@@ -85,7 +108,16 @@ static void *fs_open(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
 static lv_fs_res_t fs_close(lv_fs_drv_t *drv, void *file_p)
 {
   (void)drv;
-  fclose(file_p);
+  int fd = fileno(file_p);
+  int result = fclose(file_p);
+  int close_errno = errno;
+  __atomic_sub_fetch(&s_lvgl_open_files, 1, __ATOMIC_RELAXED);
+  if (result != 0)
+  {
+    ESP_LOGE(TAG, "SD_DIAG fclose failed: fd=%d errno=%d (%s)",
+             fd, close_errno, strerror(close_errno));
+  }
+  errno = close_errno;
   return LV_FS_RES_OK;
 }
 
@@ -93,11 +125,13 @@ static lv_fs_res_t fs_read(lv_fs_drv_t *drv, void *file_p, void *buf,
                            uint32_t btr, uint32_t *br)
 {
   (void)drv;
-  long pos = ftell(file_p);
   *br = fread(buf, 1, btr, file_p);
-  if (pos == 0)
+  int read_errno = errno;
+  if (ferror(file_p))
   {
-    ESP_LOGI(TAG, "fs_read first chunk: btr=%" PRIu32 " br=%" PRIu32, btr, *br);
+    ESP_LOGE(TAG, "SD_DIAG fread failed: fd=%d requested=%" PRIu32
+             " read=%" PRIu32 " errno=%d (%s)",
+             fileno(file_p), btr, *br, read_errno, strerror(read_errno));
   }
   return LV_FS_RES_OK;
 }

@@ -8,6 +8,9 @@ CONFIG_USE_SOFTAP_NET_CONFIGURING=y
 CONFIG_WIFI_CONFIG_MODE_FORMAT_DISPLAY=y
 CONFIG_WIFI_CONFIG_MODE_SSID_PREFIX="MZ"
 
+# The USB mode page exposes the microSD card as a USB mass-storage device.
+CONFIG_TINYUSB_MSC_ENABLED=y
+
 # The VB6824 performs the wake-word/audio front-end work on this board.
 # CONFIG_USE_AFE_WAKE_WORD is not set
 # CONFIG_USE_CUSTOM_WAKE_WORD is not set
